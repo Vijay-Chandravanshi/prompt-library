@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Prompt Library</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'midnight': '#0f172a',
+                        'charcoal': '#1e293b',
+                        'gold': '#d4af37',
+                        'gold-light': '#f3e5ab',
+                        'paper': '#f8fafc',
+                        'mist': '#94a3b8'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a; /* Fallback */
+            color: #f8fafc;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-color: #d4af37;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Focus Mode overlay styles */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-midnight min-h-screen flex flex-col font-sans antialiased selection:bg-gold selection:text-midnight">
+
+    <!-- Header -->
+    <header class="py-10 px-6 text-center border-b border-white/10 relative overflow-hidden flex-shrink-0">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+        <div class="relative z-10 max-w-4xl mx-auto">
+            <h1 class="font-display text-4xl md:text-5xl text-gold mb-3 tracking-widest uppercase">The Prompt Library</h1>
+            <p class="font-serif text-mist italic text-lg md:text-xl">Keys to unlock your mind.</p>
+            <p class="text-gold-light/70 text-sm mt-2 font-medium tracking-wide">Based on the book <em class="text-white">"Just 10 Minutes with pen and paper"</em></p>
+            <p class="mt-6 text-sm text-gray-400 max-w-2xl mx-auto">
+                Don't read top to bottom. Ask: <span class="text-white">"What do I need right now?"</span><br>
+                Select a card to enter <strong>Focus Mode</strong> with a built-in timer.
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <div id="app" class="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full overflow-hidden h-[calc(100vh-250px)]">
+
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 flex-shrink-0 border-r border-white/5 bg-midnight/50 p-6 md:h-full overflow-y-auto custom-scrollbar">
+            <div class="mb-8">
+                <button onclick="filterPrompts('all')" id="btn-all" class="cat-btn w-full text-left px-4 py-3 rounded-lg text-gold bg-white/5 border border-gold/30 font-medium mb-4 transition-all hover:bg-white/10">
+                    <i data-lucide="layout-grid" class="inline w-4 h-4 mr-2"></i> All Prompts
+                </button>
+                <button onclick="pickRandom()" class="w-full text-left px-4 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 font-medium transition-all shadow-lg shadow-indigo-900/50">
+                    <i data-lucide="shuffle" class="inline w-4 h-4 mr-2"></i> Pick for Me
+                </button>
+            </div>
+
+            <div class="space-y-1 pb-10">
+                <p class="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Original Collections</p>
+                <button onclick="filterPrompts('clarity')" id="btn-clarity" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="cloud-lightning" class="w-4 h-4 mr-3"></i> Clarity Engine
+                </button>
+                <button onclick="filterPrompts('morning')" id="btn-morning" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="sun" class="w-4 h-4 mr-3"></i> Morning Spark
+                </button>
+                <button onclick="filterPrompts('evening')" id="btn-evening" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="moon" class="w-4 h-4 mr-3"></i> Evening Wind-Down
+                </button>
+                <button onclick="filterPrompts('future')" id="btn-future" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="telescope" class="w-4 h-4 mr-3"></i> Future Architect
+                </button>
+                <button onclick="filterPrompts('shadow')" id="btn-shadow" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="ghost" class="w-4 h-4 mr-3"></i> Deep Dive
+                </button>
+                <button onclick="filterPrompts('unstuck')" id="btn-unstuck" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="zap" class="w-4 h-4 mr-3"></i> Unstuck List
+                </button>
+
+                <p class="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">New Categories</p>
+                
+                <button onclick="filterPrompts('love')" id="btn-love" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="heart" class="w-4 h-4 mr-3"></i> Love
+                </button>
+                <button onclick="filterPrompts('gratitude')" id="btn-gratitude" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="gift" class="w-4 h-4 mr-3"></i> Gratitude
+                </button>
+                <button onclick="filterPrompts('reflection')" id="btn-reflection" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="search" class="w-4 h-4 mr-3"></i> Reflection
+                </button>
+                <button onclick="filterPrompts('mindfulness')" id="btn-mindfulness" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="brain" class="w-4 h-4 mr-3"></i> Mindfulness
+                </button>
+                <button onclick="filterPrompts('fun')" id="btn-fun" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="party-popper" class="w-4 h-4 mr-3"></i> Fun
+                </button>
+                <button onclick="filterPrompts('fitness')" id="btn-fitness" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="activity" class="w-4 h-4 mr-3"></i> Fitness
+                </button>
+                <button onclick="filterPrompts('creativity')" id="btn-creativity" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="palette" class="w-4 h-4 mr-3"></i> Creativity
+                </button>
+                <button onclick="filterPrompts('legacy')" id="btn-legacy" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="sprout" class="w-4 h-4 mr-3"></i> Legacy
+                </button>
+                <button onclick="filterPrompts('aboutme')" id="btn-aboutme" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="user" class="w-4 h-4 mr-3"></i> About Me
+                </button>
+                <button onclick="filterPrompts('yearahead')" id="btn-yearahead" class="cat-btn w-full text-left px-4 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-3"></i> The Year Ahead
+                </button>
+            </div>
+        </aside>
+
+        <!-- Prompts Grid -->
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <h2 id="current-category-title" class="text-2xl font-serif text-white">All Prompts</h2>
+                <span id="count-display" class="text-sm text-gray-500 bg-white/5 px-3 py-1 rounded-full"></span>
+            </div>
+
+            <div id="prompts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                <!-- Cards injected via JS -->
+            </div>
+            
+            <!-- Footer -->
+             <footer class="mt-16 text-center text-gray-600 text-sm border-t border-white/5 pt-8 pb-8">
+                <p>The Prompt Library &copy; 2024. Your writing is stored locally in your browser.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Focus Mode Modal -->
+    <div id="focus-modal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-midnight/95 backdrop-blur-sm" onclick="closeFocusMode()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-charcoal border border-white/10 w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col relative overflow-hidden fade-in">
+                
+                <!-- Toolbar -->
+                <div class="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
+                    <!-- Left: Back Button -->
+                    <button onclick="closeFocusMode()" class="flex items-center text-gray-400 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition group">
+                        <i data-lucide="arrow-left" class="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform"></i>
+                        <span class="font-medium">Back</span>
+                    </button>
+
+                    <!-- Right: Timer & Meta -->
+                    <div class="flex items-center space-x-4">
+                        <span id="modal-category" class="hidden md:inline text-xs uppercase tracking-widest text-gold font-bold">Category</span>
+                        <div class="hidden md:block h-4 w-px bg-white/10"></div>
+                        <div class="flex items-center text-gray-300">
+                            <i data-lucide="timer" class="w-4 h-4 mr-2"></i>
+                            <span id="timer-display" class="font-mono text-lg">10:00</span>
+                        </div>
+                        <button onclick="toggleTimer()" id="timer-btn" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-white transition">Start</button>
+                    </div>
+                </div>
+
+                <!-- Prompt Display -->
+                <div class="p-8 bg-gradient-to-b from-charcoal to-midnight/50">
+                    <h2 id="modal-title" class="font-serif text-2xl md:text-3xl text-white leading-tight mb-2">Prompt Title</h2>
+                    <p id="modal-text" class="text-gray-400 text-lg">Prompt description goes here...</p>
+                </div>
+
+                <!-- Writing Area -->
+                <div class="flex-1 p-0 relative bg-paper text-gray-800">
+                    <textarea id="journal-entry" class="w-full h-full p-8 resize-none focus:outline-none text-lg leading-relaxed font-serif bg-[#f8fafc] text-slate-800" placeholder="Start writing here..."></textarea>
+                    
+                    <!-- Save Status -->
+                    <div id="save-status" class="absolute bottom-4 right-6 text-xs text-slate-400 italic opacity-0 transition-opacity">
+                        Saved
+                    </div>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="p-4 bg-gray-100 border-t border-gray-200 flex justify-between items-center">
+                    <button onclick="copyEntry()" class="text-sm text-slate-600 hover:text-slate-900 flex items-center">
+                        <i data-lucide="copy" class="w-4 h-4 mr-2"></i> Copy Text
+                    </button>
+                    <button onclick="downloadEntry()" class="text-sm bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded shadow flex items-center">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i> Save as File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const prompts = [
+            // Clarity Engine
+            { id: 'c1', category: 'clarity', title: 'The Brain Drain', text: 'List everything draining your energy right now (people, tasks, tabs open). Which one can you close today?' },
+            { id: 'c2', category: 'clarity', title: 'The Heavy Weight', text: 'What feels heavy on your shoulders right now? If you could put it down for just 10 minutes, what would you do?' },
+            { id: 'c3', category: 'clarity', title: 'The Fear Audit', text: 'What scares you the most right now? Write it down, then answer: "If this happened, would I survive?"' },
+            { id: 'c4', category: 'clarity', title: 'The "No" List', text: 'What are you saying "yes" to that you secretly want to say "no" to?' },
+            { id: 'c5', category: 'clarity', title: 'The Negative Loop', text: 'What negative thought keeps repeating in your head? Rewrite it as if you were talking to a best friend.' },
+            { id: 'c6', category: 'clarity', title: 'The Release', text: 'What do I need to let go of today to feel 10% lighter?' },
+            { id: 'c7', category: 'clarity', title: 'The Root Cause', text: 'I am feeling [Insert Emotion]. The real reason I am feeling this is... (Keep writing "and the real reason is..." until you hit the truth).' },
+            { id: 'c8', category: 'clarity', title: 'The Decision Matrix', text: 'Write down a decision you are struggling with. What is the cost of doing nothing? What is the cost of getting it wrong? What is the cost of getting it right?' }, 
+
+            // Morning Spark
+            { id: 'm1', category: 'morning', title: 'The Daily Intention', text: 'If today were a chapter in a book, what would the title be?' },
+            { id: 'm2', category: 'morning', title: 'The Anticipation', text: 'What is one thing I am actually looking forward to today?' },
+            { id: 'm3', category: 'morning', title: 'The Priority', text: 'If I only accomplished one thing today to feel proud, what would it be?' },
+            { id: 'm4', category: 'morning', title: 'The Joy Hunter', text: 'What simple thing (coffee, sunshine, a song) is giving me joy right now?' },
+            { id: 'm5', category: 'morning', title: 'The Confidence Check', text: 'What makes me feel confident? How can I do more of that today?' },
+            { id: 'm6', category: 'morning', title: 'The Gratitude Anchor', text: 'What are 3 things I am grateful for that cost $0?' },
+            { id: 'm7', category: 'morning', title: 'The Dream', text: 'I woke up thinking about...' },
+            { id: 'm8', category: 'morning', title: 'The Body Scan', text: 'Close your eyes for 30 seconds. Where are you holding tension? What does your body need today (water, stretching, rest)?' },
+
+            // Evening Wind-Down
+            { id: 'e1', category: 'evening', title: 'The Victory Log', text: 'What is one small win I had today that nobody else noticed?' },
+            { id: 'e2', category: 'evening', title: 'The Forgiveness Note', text: 'What do I want to forgive myself for today? (A mistake, a lazy moment, a harsh word).' },
+            { id: 'e3', category: 'evening', title: 'The Peace Finder', text: 'What was the most peaceful moment of my day?' },
+            { id: 'e4', category: 'evening', title: 'The Lesson', text: 'What did I learn today that I didn\'t know yesterday?' },
+            { id: 'e5', category: 'evening', title: 'The Connection', text: 'How did I treat the people I love today?' },
+            { id: 'e6', category: 'evening', title: 'The Tomorrow Gift', text: 'What is one thing I can do tonight to make tomorrow-me happier?' },
+            { id: 'e7', category: 'evening', title: 'The Unfinished Business', text: 'List everything you didn\'t finish. Now, visualize putting them in a box and locking it until tomorrow morning.' },
+
+            // Future Architect
+            { id: 'f1', category: 'future', title: 'The Dream Life', text: 'Describe your ideal Tuesday five years from now. What are you wearing? Who are you with? What work are you doing?' },
+            { id: 'f2', category: 'future', title: 'The Money Relationship', text: 'If money were a person, how would you describe your relationship with them right now? How do you want it to be?' },
+            { id: 'f3', category: 'future', title: 'The Fearless Version', text: 'What would I do immediately if I knew I simply could not fail?' },
+            { id: 'f4', category: 'future', title: 'The Skill Gap', text: 'What do I want to learn this year, and why haven\'t I started?' },
+            { id: 'f5', category: 'future', title: 'The Routine Edit', text: 'What is one habit that, if I changed it, would improve my entire life?' },
+            { id: 'f6', category: 'future', title: 'The Goal', text: 'What is a goal that scares me and excites me at the same time?' },
+            { id: 'f7', category: 'future', title: 'The 80-Year-Old Me', text: 'Imagine you are 80 years old looking back at your current age. What advice does your older self give you?' },
+
+            // Deep Dive (Shadow)
+            { id: 's1', category: 'shadow', title: 'The Mirror', text: 'Who am I when no one is watching?' },
+            { id: 's2', category: 'shadow', title: 'The Unspoken', text: 'What is something I want to say to someone but haven\'t? Write it here (you don\'t have to send it).' },
+            { id: 's3', category: 'shadow', title: 'The Belief', text: 'What is a belief about myself that I want to change? (e.g., "I\'m lazy" -> "I need rest").' },
+            { id: 's4', category: 'shadow', title: 'The Relationship', text: 'What do I truly want in a relationship that I am afraid to ask for?' },
+            { id: 's5', category: 'shadow', title: 'The Roots', text: 'What is a positive trait I inherited from my parents? What is a negative pattern I want to break?' },
+            { id: 's6', category: 'shadow', title: 'The Unique Spark', text: 'What makes me unique? (Don\'t be humble. Be honest).' },
+            { id: 's7', category: 'shadow', title: 'The Inner Child', text: 'Recall a memory where you felt small or hurt as a child. What did that version of you need to hear? Tell them now.' },
+
+            // Unstuck List
+            { id: 'u1', category: 'unstuck', title: 'Smell', text: 'Right now, the room smells like...' },
+            { id: 'u2', category: 'unstuck', title: 'Color', text: 'The color of my mood today is...' },
+            { id: 'u3', category: 'unstuck', title: 'Wish', text: 'I really wish I didn\'t have to...' },
+            { id: 'u4', category: 'unstuck', title: 'Teleport', text: 'If I could teleport anywhere right now, I\'d go to...' },
+            { id: 'u5', category: 'unstuck', title: 'Letter', text: 'Dear Past Me, I want to tell you...' },
+
+            // --- NEW CATEGORIES ---
+
+            // Love
+            { id: 'l1', category: 'love', title: 'Self-Love', text: 'What are three things I genuinely love about myself right now?' },
+            { id: 'l2', category: 'love', title: 'The Love Language', text: 'How do I prefer to receive love? How do I usually show it to others? Is there a disconnect?' },
+            { id: 'l3', category: 'love', title: 'The Connection', text: 'Who made me feel seen or heard recently? How can I thank them?' },
+            { id: 'l4', category: 'love', title: 'The Ideal Partner', text: 'Describe the qualities of the person you want to attract or the partner you want to be.' },
+
+            // Gratitude
+            { id: 'g1', category: 'gratitude', title: 'The Simple Things', text: 'List 5 very small things (e.g., warm tea, a comfortable chair) that made today better.' },
+            { id: 'g2', category: 'gratitude', title: 'The Struggle', text: 'What is a difficult situation I am currently in that I can find a silver lining for?' },
+            { id: 'g3', category: 'gratitude', title: 'The People', text: 'Who is someone I haven\'t thanked properly? Write a mental (or real) thank you note to them.' },
+            { id: 'g4', category: 'gratitude', title: 'The Body', text: 'What is one thing my body allowed me to do today that I am grateful for?' },
+
+            // Reflection
+            { id: 'r1', category: 'reflection', title: 'The Daily Audit', text: 'What went well today? What didn\'t go well? What can I do differently tomorrow?' },
+            { id: 'r2', category: 'reflection', title: 'The Turning Point', text: 'Think of a moment that changed your life trajectory. How does it still affect you today?' },
+            { id: 'r3', category: 'reflection', title: 'The Pattern', text: 'What is a mistake I keep making? Why do I think I keep repeating it?' },
+
+            // Mindfulness
+            { id: 'mi1', category: 'mindfulness', title: 'Five Senses', text: 'List: 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, 1 thing you taste.' },
+            { id: 'mi2', category: 'mindfulness', title: 'The Breath', text: 'Sit for a moment. Describe the sensation of your breath entering and leaving your body.' },
+            { id: 'mi3', category: 'mindfulness', title: 'The Present', text: 'What is happening right now, in this exact second, that is perfectly okay?' },
+
+            // Fun
+            { id: 'fn1', category: 'fun', title: 'The Inner Play', text: 'When was the last time you laughed until your stomach hurt? Relive that memory.' },
+            { id: 'fn2', category: 'fun', title: 'If I Were a Kid', text: 'If you were 8 years old again with a free Saturday, what would you do?' },
+            { id: 'fn3', category: 'fun', title: 'The Absurd', text: 'Write a completely ridiculous story about a squirrel who becomes president.' },
+
+            // Fitness
+            { id: 'fit1', category: 'fitness', title: 'The Movement', text: 'How did I move my body today? Did I treat it with kindness or punishment?' },
+            { id: 'fit2', category: 'fitness', title: 'The Goal', text: 'What is a fitness goal that actually excites me, rather than one I feel obligated to do?' },
+            { id: 'fit3', category: 'fitness', title: 'The Fuel', text: 'How did the food I ate today make me feel? Energetic? Sluggish? Neutral?' },
+
+            // Creativity
+            { id: 'cr1', category: 'creativity', title: 'The Creation', text: 'If I had unlimited resources and time, what masterpiece would I create?' },
+            { id: 'cr2', category: 'creativity', title: 'The Problem Solver', text: 'Take a problem you have right now. Brainstorm 10 completely wild, impossible solutions for it.' },
+            { id: 'cr3', category: 'creativity', title: 'The Artist Date', text: 'If I could take myself on a date to inspire my inner artist, where would we go?' },
+
+            // Legacy
+            { id: 'lg1', category: 'legacy', title: 'The Eulogy', text: 'What do I want people to say about me when I am gone? Write the opening paragraph.' },
+            { id: 'lg2', category: 'legacy', title: 'The Values', text: 'What are the three core values I want to pass down to the next generation?' },
+            { id: 'lg3', category: 'legacy', title: 'The Impact', text: 'Whose life do I want to have made better by the time I leave this world?' },
+
+            // About Me
+            { id: 'am1', category: 'aboutme', title: 'The Elevator Pitch', text: 'Describe yourself in exactly three words. Why those three?' },
+            { id: 'am2', category: 'aboutme', title: 'The Hidden Talent', text: 'What is something I am good at that very few people know about?' },
+            { id: 'am3', category: 'aboutme', title: 'The Perfect Day', text: 'Walk through your absolutely perfect day from waking up to going to sleep.' },
+
+            // The Year Ahead
+            { id: 'ya1', category: 'yearahead', title: 'The Theme', text: 'If this coming year had a theme song or a movie title, what would it be?' },
+            { id: 'ya2', category: 'yearahead', title: 'The Big Rock', text: 'What is the ONE major thing I want to accomplish by this time next year?' },
+            { id: 'ya3', category: 'yearahead', title: 'The Release', text: 'What am I leaving behind in the last year that I refuse to carry into the new one?' }
+        ];
+
+        const categoryNames = {
+            'clarity': 'The Clarity Engine',
+            'morning': 'The Morning Spark',
+            'evening': 'The Evening Wind-Down',
+            'future': 'The Future Architect',
+            'shadow': 'The Deep Dive',
+            'unstuck': 'The Unstuck List',
+            'love': 'Love',
+            'gratitude': 'Gratitude',
+            'reflection': 'Reflection',
+            'mindfulness': 'Mindfulness',
+            'fun': 'Fun',
+            'fitness': 'Fitness',
+            'creativity': 'Creativity',
+            'legacy': 'Legacy',
+            'aboutme': 'About Me',
+            'yearahead': 'The Year Ahead'
+        };
+
+        const icons = {
+            'clarity': 'cloud-lightning',
+            'morning': 'sun',
+            'evening': 'moon',
+            'future': 'telescope',
+            'shadow': 'ghost',
+            'unstuck': 'zap',
+            'love': 'heart',
+            'gratitude': 'gift',
+            'reflection': 'search',
+            'mindfulness': 'brain',
+            'fun': 'party-popper',
+            'fitness': 'activity',
+            'creativity': 'palette',
+            'legacy': 'sprout',
+            'aboutme': 'user',
+            'yearahead': 'calendar'
+        };
+
+        // --- STATE & DOM ---
+        let currentPrompts = [];
+        let timerInterval;
+        let timeRemaining = 600; // 10 minutes
+        let isTimerRunning = false;
+        let currentPromptId = null;
+
+        const grid = document.getElementById('prompts-grid');
+        const modal = document.getElementById('focus-modal');
+        const journalArea = document.getElementById('journal-entry');
+        const saveStatus = document.getElementById('save-status');
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            filterPrompts('all');
+            lucide.createIcons();
+            
+            // Auto-save setup
+            journalArea.addEventListener('input', () => {
+                if(currentPromptId) {
+                    localStorage.setItem(`prompt_${currentPromptId}`, journalArea.value);
+                    showSavedStatus();
+                }
+            });
+        });
+
+        // --- CORE FUNCTIONS ---
+
+        function filterPrompts(category) {
+            // Update Active Button State
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-white/10', 'text-white', 'border-l-4', 'border-gold');
+                btn.classList.add('text-gray-400');
+            });
+
+            if (category === 'all') {
+                document.getElementById('btn-all').classList.add('bg-white/10', 'text-gold');
+                currentPrompts = prompts;
+                document.getElementById('current-category-title').innerText = "All Prompts";
+            } else {
+                const activeBtn = document.getElementById(`btn-${category}`);
+                activeBtn.classList.add('bg-white/5', 'text-white', 'border-l-4', 'border-gold');
+                activeBtn.classList.remove('text-gray-400');
+                
+                currentPrompts = prompts.filter(p => p.category === category);
+                document.getElementById('current-category-title').innerText = categoryNames[category];
+            }
+
+            document.getElementById('count-display').innerText = `${currentPrompts.length} cards`;
+            renderGrid();
+        }
+
+        function renderGrid() {
+            grid.innerHTML = '';
+            
+            // Staggered animation delay
+            let delay = 0;
+
+            currentPrompts.forEach(prompt => {
+                const card = document.createElement('div');
+                card.className = `bg-charcoal border border-white/5 p-6 rounded-xl cursor-pointer card-hover relative group fade-in flex flex-col justify-between h-full`;
+                card.style.animationDelay = `${delay}ms`;
+                delay += 50;
+                
+                card.onclick = () => openFocusMode(prompt);
+
+                const iconName = icons[prompt.category];
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-gold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition">${prompt.category}</span>
+                            <i data-lucide="${iconName}" class="w-5 h-5 text-gray-500 group-hover:text-gold transition"></i>
+                        </div>
+                        <h3 class="font-serif text-xl text-white mb-2 leading-tight group-hover:text-gold-light transition">${prompt.title}</h3>
+                        <p class="text-gray-400 text-sm line-clamp-3 leading-relaxed">${prompt.text}</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-white/5 flex items-center text-xs text-gray-500 group-hover:text-gold transition">
+                        <span>Click to focus</span>
+                        <i data-lucide="arrow-right" class="w-3 h-3 ml-2 transform group-hover:translate-x-1 transition"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function pickRandom() {
+            const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+            openFocusMode(randomPrompt);
+        }
+
+        // --- FOCUS MODE LOGIC ---
+
+        function openFocusMode(prompt) {
+            currentPromptId = prompt.id;
+            
+            // UI Updates
+            document.getElementById('modal-category').innerText = categoryNames[prompt.category] || prompt.category;
+            document.getElementById('modal-title').innerText = prompt.title;
+            document.getElementById('modal-text').innerText = prompt.text;
+            
+            // Load previous entry if exists
+            const savedEntry = localStorage.getItem(`prompt_${prompt.id}`);
+            journalArea.value = savedEntry || '';
+
+            // Reset Timer
+            resetTimer();
+
+            // Show Modal
+            modal.classList.remove('hidden');
+            // No longer need body scroll lock since we handle it in app container
+            
+            lucide.createIcons();
+        }
+
+        function closeFocusMode() {
+            modal.classList.add('hidden');
+            stopTimer();
+        }
+
+        function showSavedStatus() {
+            saveStatus.classList.remove('opacity-0');
+            setTimeout(() => {
+                saveStatus.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        function copyEntry() {
+            journalArea.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        function downloadEntry() {
+            const text = journalArea.value;
+            const title = document.getElementById('modal-title').innerText;
+            const blob = new Blob([`PROMPT: ${title}\n\n${text}`], { type: 'text/plain' });
+            const anchor = document.createElement('a');
+            anchor.download = `${title.replace(/\s+/g, '-').toLowerCase()}-entry.txt`;
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = '_blank';
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+
+        // --- TIMER LOGIC ---
+
+        function toggleTimer() {
+            const btn = document.getElementById('timer-btn');
+            if (isTimerRunning) {
+                stopTimer();
+                btn.innerText = "Resume";
+                btn.classList.remove('bg-red-500');
+                btn.classList.add('bg-white/10');
+            } else {
+                startTimer();
+                btn.innerText = "Pause";
+                btn.classList.remove('bg-white/10');
+                btn.classList.add('bg-red-500', 'hover:bg-red-600');
+            }
+        }
+
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            timerInterval = setInterval(() => {
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                } else {
+                    stopTimer();
+                    alert("10 minutes are up! Great work.");
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timeRemaining = 600;
+            updateTimerDisplay();
+            const btn = document.getElementById('timer-btn');
+            btn.innerText = "Start Timer";
+            btn.className = "text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-white transition";
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+    </script>
+</body>
+</html>
